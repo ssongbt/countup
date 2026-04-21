@@ -1,6 +1,8 @@
 import 'package:countup/features/goals/presentation/providers/goal_providers.dart';
+import 'package:countup/core/routing/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class GoalDetailScreen extends ConsumerWidget {
   const GoalDetailScreen({
@@ -26,7 +28,27 @@ class GoalDetailScreen extends ConsumerWidget {
     final isCompleted = goal.isCompleted;
 
     return Scaffold(
-      appBar: AppBar(title: Text(goal.title)),
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: '뒤로가기',
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+              return;
+            }
+            context.go(AppRoutes.home);
+          },
+          icon: const Icon(Icons.arrow_back_ios_new),
+        ),
+        title: Text(goal.title),
+        actions: [
+          IconButton(
+            tooltip: '홈으로',
+            onPressed: () => context.go(AppRoutes.home),
+            icon: const Icon(Icons.home_outlined),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -73,7 +95,7 @@ class GoalDetailScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             OutlinedButton(
               onPressed: canUndo ? () => notifier.undo(goalId) : null,
-              child: const Text('Undo'),
+              child: const Text('취소'),
             ),
           ],
         ),

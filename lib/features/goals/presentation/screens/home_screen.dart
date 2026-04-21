@@ -27,11 +27,35 @@ class HomeScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               final goal = goals[index];
               return Card(
-                child: ListTile(
+                child: InkWell(
                   onTap: () => context.go('/goal/${goal.id}'),
-                  title: Text(goal.title),
-                  subtitle: Text('${goal.currentCount}/${goal.targetCount}'),
-                  trailing: Text('${(goal.progress * 100).round()}%'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                goal.title,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ),
+                            Text('${(goal.progress * 100).round()}%'),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${goal.currentCount}/${goal.targetCount} · 남은 ${goal.remainingCount}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 10),
+                        _BlockGauge(progress: goal.progress),
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
@@ -42,6 +66,35 @@ class HomeScreen extends ConsumerWidget {
         onPressed: () => context.push(AppRoutes.create),
         child: const Icon(Icons.add),
       ),
+    );
+  }
+}
+
+class _BlockGauge extends StatelessWidget {
+  const _BlockGauge({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    const totalBlocks = 12;
+    final filledCount = (progress * totalBlocks).round().clamp(0, totalBlocks);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      children: List.generate(totalBlocks, (index) {
+        final filled = index < filledCount;
+        return Expanded(
+          child: Container(
+            height: 12,
+            margin: EdgeInsets.only(right: index == totalBlocks - 1 ? 0 : 4),
+            decoration: BoxDecoration(
+              color: filled ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+        );
+      }),
     );
   }
 }

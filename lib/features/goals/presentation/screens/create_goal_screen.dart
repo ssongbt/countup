@@ -1,4 +1,5 @@
 import 'package:countup/features/goals/presentation/providers/goal_providers.dart';
+import 'package:countup/core/routing/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +42,16 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('목표 만들기')),
+      appBar: AppBar(
+        title: const Text('목표 만들기'),
+        actions: [
+          IconButton(
+            tooltip: '홈으로',
+            onPressed: () => context.go(AppRoutes.home),
+            icon: const Icon(Icons.home_outlined),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -52,13 +62,13 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
                 controller: _titleController,
                 maxLength: 30,
                 decoration: const InputDecoration(
-                  labelText: '목표 이름',
+                  labelText: '목표',
                   hintText: '예: 헬스 13번 가기',
                 ),
                 validator: (value) {
                   final text = value?.trim() ?? '';
                   if (text.isEmpty) {
-                    return '목표 이름을 입력해주세요.';
+                    return '목표를 입력해주세요.';
                   }
                   return null;
                 },
@@ -72,8 +82,8 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   final parsed = int.tryParse(value ?? '');
-                  if (parsed == null || parsed < 1 || parsed > 9999) {
-                    return '1~9999 사이 숫자를 입력해주세요.';
+                  if (parsed == null || parsed < 1 || parsed > 999) {
+                    return '1~999 사이 숫자를 입력해주세요.';
                   }
                   return null;
                 },
