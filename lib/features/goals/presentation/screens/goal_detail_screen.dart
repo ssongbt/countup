@@ -47,6 +47,39 @@ class GoalDetailScreen extends ConsumerWidget {
             onPressed: () => context.go(AppRoutes.home),
             icon: const Icon(Icons.home_outlined),
           ),
+          IconButton(
+            tooltip: '삭제',
+            onPressed: () async {
+              final shouldDelete = await showDialog<bool>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Text('목표를 삭제할까요?'),
+                  content: const Text('삭제 후에는 복구할 수 없어요.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(false),
+                      child: const Text('취소'),
+                    ),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                      onPressed: () => Navigator.of(dialogContext).pop(true),
+                      child: const Text('삭제'),
+                    ),
+                  ],
+                ),
+              );
+              if (shouldDelete != true || !context.mounted) {
+                return;
+              }
+              await notifier.deleteGoal(goalId);
+              if (context.mounted) {
+                context.go(AppRoutes.home);
+              }
+            },
+            icon: const Icon(Icons.delete_outline),
+          ),
         ],
       ),
       body: Padding(
@@ -60,7 +93,10 @@ class GoalDetailScreen extends ConsumerWidget {
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 16),
-            LinearProgressIndicator(value: goal.progress),
+            _SquareProgressGrid(
+              currentCount: goal.currentCount,
+              targetCount: goal.targetCount,
+            ),
             const SizedBox(height: 12),
             Text(
               '남은 횟수: ${goal.remainingCount}',
@@ -98,6 +134,49 @@ class GoalDetailScreen extends ConsumerWidget {
               child: const Text('취소'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SquareProgressGrid extends StatelessWidget {
+  const _SquareProgressGrid({
+    required this.currentCount,
+    required this.targetCount,
+  });
+
+  final int currentCount;
+  final int targetCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final filledCount = currentCount.clamp(0, targetCount);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      height: 180,
+      child: SingleChildScrollView(
+        child: Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: List.generate(targetCount, (index) {
+            final filled = index < filledCount;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                color: filled ? colorScheme.secondary : colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(
+                  color: filled
+                      ? colorScheme.secondary.withValues(alpha: 0.85)
+                      : colorScheme.outlineVariant,
+                ),
+              ),
+            );
+          }),
         ),
       ),
     );

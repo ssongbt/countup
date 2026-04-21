@@ -70,5 +70,13 @@ class GoalsNotifier extends AsyncNotifier<List<Goal>> {
     await refreshGoals();
   }
 
+  Future<void> deleteGoal(String goalId) async {
+    await ref.read(goalRepositoryProvider).deleteGoal(goalId);
+    if (_undoTargetGoalId == goalId) {
+      _undoTargetGoalId = null;
+    }
+    await refreshGoals();
+  }
+
   bool canUndo(String goalId) => _undoTargetGoalId == goalId;
 }

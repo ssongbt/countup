@@ -43,6 +43,42 @@ class HomeScreen extends ConsumerWidget {
                                 style: Theme.of(context).textTheme.titleMedium,
                               ),
                             ),
+                            PopupMenuButton<String>(
+                              onSelected: (value) async {
+                                if (value != 'delete') {
+                                  return;
+                                }
+                                final shouldDelete = await showDialog<bool>(
+                                  context: context,
+                                  builder: (dialogContext) => AlertDialog(
+                                    title: const Text('목표를 삭제할까요?'),
+                                    content: const Text('삭제 후에는 복구할 수 없어요.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(dialogContext).pop(false),
+                                        child: const Text('취소'),
+                                      ),
+                                      FilledButton(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: Theme.of(context).colorScheme.error,
+                                        ),
+                                        onPressed: () => Navigator.of(dialogContext).pop(true),
+                                        child: const Text('삭제'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (shouldDelete == true && context.mounted) {
+                                  await ref.read(goalsProvider.notifier).deleteGoal(goal.id);
+                                }
+                              },
+                              itemBuilder: (context) => const [
+                                PopupMenuItem<String>(
+                                  value: 'delete',
+                                  child: Text('삭제'),
+                                ),
+                              ],
+                            ),
                             Text('${(goal.progress * 100).round()}%'),
                           ],
                         ),
@@ -52,7 +88,7 @@ class HomeScreen extends ConsumerWidget {
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 10),
-                        _BlockGauge(progress: goal.progress),
+                        LinearProgressIndicator(value: goal.progress),
                       ],
                     ),
                   ),
@@ -66,35 +102,6 @@ class HomeScreen extends ConsumerWidget {
         onPressed: () => context.push(AppRoutes.create),
         child: const Icon(Icons.add),
       ),
-    );
-  }
-}
-
-class _BlockGauge extends StatelessWidget {
-  const _BlockGauge({required this.progress});
-
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    const totalBlocks = 12;
-    final filledCount = (progress * totalBlocks).round().clamp(0, totalBlocks);
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Row(
-      children: List.generate(totalBlocks, (index) {
-        final filled = index < filledCount;
-        return Expanded(
-          child: Container(
-            height: 12,
-            margin: EdgeInsets.only(right: index == totalBlocks - 1 ? 0 : 4),
-            decoration: BoxDecoration(
-              color: filled ? colorScheme.primary : colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
-        );
-      }),
     );
   }
 }
