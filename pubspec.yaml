@@ -1,0 +1,33 @@
+name: countup
+description: "CountUp - finite goal counter app"
+publish_to: 'none'
+version: 1.0.0+1
+environment:
+  sdk: ^3.11.4
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # State management
+  flutter_riverpod: ^2.5.1
+  # Routing
+  go_router: ^14.2.7
+  # Local DB (Isar)
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  path_provider: ^2.1.4
+  # Utilities
+  uuid: ^4.5.1
+  intl: ^0.19.0
+  # Optional UX effects (uncomment if needed)
+  # confetti: ^0.7.0
+  # flutter_animate: ^4.5.0
+  # lottie: ^3.1.2
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.13
+  isar_generator: ^3.1.0+1
+flutter:
+  uses-material-design: true
