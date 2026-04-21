@@ -1,30 +1,22 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:countup/features/goals/domain/entities/goal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:countup/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('Goal progress and remaining count works', () {
+    final goal = Goal(
+      id: 'goal-1',
+      title: '헬스 13번',
+      targetCount: 13,
+      currentCount: 7,
+      status: GoalStatus.active,
+      createdAt: DateTime(2026, 1, 1),
+      updatedAt: DateTime(2026, 1, 1),
+      completedAt: null,
+      visualType: GoalVisualType.dots,
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(goal.progress, closeTo(7 / 13, 0.00001));
+    expect(goal.remainingCount, 6);
+    expect(goal.isCompleted, false);
   });
 }

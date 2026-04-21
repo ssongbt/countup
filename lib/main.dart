@@ -1,70 +1,35 @@
+import 'package:countup/core/db/hive_provider.dart';
+import 'package:countup/core/routing/app_router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: CountUpApp()));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class CountUpApp extends ConsumerWidget {
+  const CountUpApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'COUNT UP',
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dbState = ref.watch(hiveBoxProvider);
+    return MaterialApp.router(
+      title: 'CountUp',
       theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'COUNT UP'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed theㅇㅇㅇ button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      routerConfig: appRouter,
+      builder: (context, child) {
+        return dbState.when(
+          data: (_) => child ?? const SizedBox.shrink(),
+          loading: () => const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, stack) => Scaffold(
+            body: Center(child: Text('로컬 DB 초기화 오류: $error')),
+          ),
+        );
+      },
     );
   }
 }
