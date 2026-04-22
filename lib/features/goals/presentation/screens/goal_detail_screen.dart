@@ -87,22 +87,37 @@ class GoalDetailScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              '${goal.currentCount} / ${goal.targetCount}',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineMedium,
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    '${goal.currentCount} / ${goal.targetCount}',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.headlineMedium?.copyWith(
+                      fontSize: 40,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _SquareProgressGrid(
+                    currentCount: goal.currentCount,
+                    targetCount: goal.targetCount,
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    '남은 횟수: ${goal.remainingCount}',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            _SquareProgressGrid(
-              currentCount: goal.currentCount,
-              targetCount: goal.targetCount,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '남은 횟수: ${goal.remainingCount}',
-              textAlign: TextAlign.center,
-            ),
-            const Spacer(),
             FilledButton.icon(
               onPressed: isCompleted
                   ? null
@@ -125,13 +140,12 @@ class GoalDetailScreen extends ConsumerWidget {
                         );
                       }
                     },
-              icon: const Icon(Icons.add),
               label: const Text('+1'),
             ),
             const SizedBox(height: 8),
             OutlinedButton(
               onPressed: canUndo ? () => notifier.undo(goalId) : null,
-              child: const Text('취소'),
+              child: const Text('-1'),
             ),
           ],
         ),
@@ -151,28 +165,38 @@ class _SquareProgressGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (targetCount <= 0) {
+      return const SizedBox.shrink();
+    }
+
     final filledCount = currentCount.clamp(0, targetCount);
     final colorScheme = Theme.of(context).colorScheme;
 
-    return SizedBox(
-      height: 180,
-      child: SingleChildScrollView(
-        child: Wrap(
-          spacing: 6,
-          runSpacing: 6,
+    return Container(
+      width: double.infinity,
+      height: 22,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(7),
+        child: Row(
           children: List.generate(targetCount, (index) {
             final filled = index < filledCount;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                color: filled ? colorScheme.secondary : colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(3),
-                border: Border.all(
-                  color: filled
-                      ? colorScheme.secondary.withValues(alpha: 0.85)
-                      : colorScheme.outlineVariant,
+            final isLast = index == targetCount - 1;
+            return Expanded(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                decoration: BoxDecoration(
+                  color: filled ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+                  border: isLast
+                      ? null
+                      : Border(
+                          right: BorderSide(
+                            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                          ),
+                        ),
                 ),
               ),
             );

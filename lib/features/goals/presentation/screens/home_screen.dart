@@ -12,7 +12,13 @@ class HomeScreen extends ConsumerWidget {
     final goalsState = ref.watch(goalsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('CountUp')),
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text(
+          'COUNTUP',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
       body: goalsState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('오류: $error')),
@@ -20,12 +26,16 @@ class HomeScreen extends ConsumerWidget {
           if (goals.isEmpty) {
             return const Center(child: Text('목표를 추가해보세요.'));
           }
+          final sortedGoals = [...goals]
+            ..sort((a, b) => a.isCompleted == b.isCompleted
+                ? 0
+                : (a.isCompleted ? 1 : -1));
           return ListView.separated(
             padding: const EdgeInsets.all(16),
-            itemCount: goals.length,
+            itemCount: sortedGoals.length,
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
-              final goal = goals[index];
+              final goal = sortedGoals[index];
               return Card(
                 child: InkWell(
                   onTap: () => context.go('/goal/${goal.id}'),
@@ -43,52 +53,28 @@ class HomeScreen extends ConsumerWidget {
                                 style: Theme.of(context).textTheme.titleMedium,
                               ),
                             ),
-                            PopupMenuButton<String>(
-                              onSelected: (value) async {
-                                if (value != 'delete') {
-                                  return;
-                                }
-                                final shouldDelete = await showDialog<bool>(
-                                  context: context,
-                                  builder: (dialogContext) => AlertDialog(
-                                    title: const Text('목표를 삭제할까요?'),
-                                    content: const Text('삭제 후에는 복구할 수 없어요.'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.of(dialogContext).pop(false),
-                                        child: const Text('취소'),
-                                      ),
-                                      FilledButton(
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: Theme.of(context).colorScheme.error,
-                                        ),
-                                        onPressed: () => Navigator.of(dialogContext).pop(true),
-                                        child: const Text('삭제'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                if (shouldDelete == true && context.mounted) {
-                                  await ref.read(goalsProvider.notifier).deleteGoal(goal.id);
-                                }
-                              },
-                              itemBuilder: (context) => const [
-                                PopupMenuItem<String>(
-                                  value: 'delete',
-                                  child: Text('삭제'),
-                                ),
-                              ],
-                            ),
-                            Text('${(goal.progress * 100).round()}%'),
+                            Text('진행률 ${(goal.progress * 100).round()}%'),
                           ],
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${goal.currentCount}/${goal.targetCount} · 남은 ${goal.remainingCount}',
+                          '${goal.currentCount}/${goal.targetCount}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 10),
-                        LinearProgressIndicator(value: goal.progress),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: LinearProgressIndicator(
+                            value: goal.progress,
+                            minHeight: 10,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.outlineVariant.withValues(alpha: 0.35),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

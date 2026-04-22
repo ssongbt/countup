@@ -14,27 +14,29 @@ class CountUpApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dbState = ref.watch(hiveBoxProvider);
     const colorScheme = ColorScheme.light(
-      primary: Color(0xFFAF95F9),
-      secondary: Color(0xFFFFAAA5),
-      surface: Color(0xFFFDF8FF),
+      primary: Color(0xFF5C6FA3),
+      secondary: Color(0xFF5F8F8B),
+      surface: Color(0xFFF4F6F8),
       onPrimary: Colors.white,
-      onSecondary: Color(0xFF5A1E2A),
-      onSurface: Color(0xFF2D1E4A),
+      onSecondary: Colors.white,
+      onSurface: Color(0xFF1F2937),
     );
 
     return MaterialApp.router(
       title: 'CountUp',
       theme: ThemeData(
+        useMaterial3: true,
         colorScheme: colorScheme,
+        fontFamily: 'Pretendard',
         scaffoldBackgroundColor: colorScheme.surface,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFFAF95F9),
+          backgroundColor: Color(0xFF5C6FA3),
           foregroundColor: Colors.white,
           elevation: 0,
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Color(0xFFFFAAA5),
-          foregroundColor: Color(0xFF5A1E2A),
+          backgroundColor: Color(0xFF5F8F8B),
+          foregroundColor: Colors.white,
         ),
       ),
       routerConfig: appRouter,
