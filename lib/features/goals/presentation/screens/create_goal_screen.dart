@@ -43,7 +43,7 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('목표 만들기'),
+        title: const Text('목표 추가'),
         actions: [
           IconButton(
             tooltip: '홈으로',

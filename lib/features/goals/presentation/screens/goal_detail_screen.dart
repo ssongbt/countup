@@ -27,6 +27,29 @@ class GoalDetailScreen extends ConsumerWidget {
     final canUndo = notifier.canUndo(goalId);
     final isCompleted = goal.isCompleted;
 
+    Future<void> handleIncrement() async {
+      if (isCompleted) {
+        return;
+      }
+      await notifier.increment(goalId);
+      final updated = ref.read(goalByIdProvider(goalId));
+      if (updated != null && updated.isCompleted && context.mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('완료!'),
+            content: Text('${updated.title} 목표를 달성했습니다.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('확인'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -83,69 +106,62 @@ class GoalDetailScreen extends ConsumerWidget {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const SizedBox(height: 8),
+            _ThinProgressBar(
+              currentCount: goal.currentCount,
+              targetCount: goal.targetCount,
+            ),
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    '${goal.currentCount} / ${goal.targetCount}',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.headlineMedium?.copyWith(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w700,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: isCompleted ? null : handleIncrement,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${goal.currentCount}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        fontSize: 72,
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                      ),
                     ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '남은 횟수 ${goal.remainingCount}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton.filledTonal(
+                    tooltip: '1회 되돌리기',
+                    onPressed: canUndo ? () => notifier.undo(goalId) : null,
+                    iconSize: 32,
+                    icon: const Icon(Icons.keyboard_arrow_down),
                   ),
-                  const SizedBox(height: 20),
-                  _SquareProgressGrid(
-                    currentCount: goal.currentCount,
-                    targetCount: goal.targetCount,
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    '남은 횟수: ${goal.remainingCount}',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                  IconButton.filled(
+                    tooltip: '1회 추가',
+                    onPressed: isCompleted ? null : handleIncrement,
+                    iconSize: 32,
+                    icon: const Icon(Icons.keyboard_arrow_up),
                   ),
                 ],
               ),
-            ),
-            FilledButton.icon(
-              onPressed: isCompleted
-                  ? null
-                  : () async {
-                      await notifier.increment(goalId);
-                      final updated = ref.read(goalByIdProvider(goalId));
-                      if (updated != null && updated.isCompleted && context.mounted) {
-                        await showDialog<void>(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title: const Text('완료!'),
-                            content: Text('${updated.title} 목표를 달성했습니다.'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text('확인'),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                    },
-              label: const Text('+1'),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: canUndo ? () => notifier.undo(goalId) : null,
-              child: const Text('-1'),
             ),
           ],
         ),
@@ -154,8 +170,8 @@ class GoalDetailScreen extends ConsumerWidget {
   }
 }
 
-class _SquareProgressGrid extends StatelessWidget {
-  const _SquareProgressGrid({
+class _ThinProgressBar extends StatelessWidget {
+  const _ThinProgressBar({
     required this.currentCount,
     required this.targetCount,
   });
@@ -170,39 +186,35 @@ class _SquareProgressGrid extends StatelessWidget {
     }
 
     final filledCount = currentCount.clamp(0, targetCount);
+    final progress = filledCount / targetCount;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      width: double.infinity,
-      height: 22,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(7),
-        child: Row(
-          children: List.generate(targetCount, (index) {
-            final filled = index < filledCount;
-            final isLast = index == targetCount - 1;
-            return Expanded(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                decoration: BoxDecoration(
-                  color: filled ? colorScheme.primary : colorScheme.surfaceContainerHighest,
-                  border: isLast
-                      ? null
-                      : Border(
-                          right: BorderSide(
-                            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-                          ),
-                        ),
-                ),
-              ),
-            );
-          }),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: SizedBox(
+            height: 4,
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              backgroundColor: colorScheme.surfaceContainerHighest,
+              color: colorScheme.primary,
+            ),
+          ),
         ),
-      ),
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            '$targetCount',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
