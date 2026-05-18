@@ -38,7 +38,7 @@ class GoalDetailScreen extends ConsumerWidget {
           context: context,
           builder: (_) => AlertDialog(
             title: const Text('완료!'),
-            content: Text('${updated.title} 목표를 달성했습니다.'),
+            content: Text('${updated.title} 목표를 달성했습니다.🎉'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
