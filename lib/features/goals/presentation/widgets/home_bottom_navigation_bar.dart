@@ -16,7 +16,7 @@ class HomeBottomNavigationBar extends ConsumerWidget {
       onTap: (index) {
         ref.read(homeTabIndexProvider.notifier).state = index;
         final location = GoRouterState.of(context).uri.path;
-        if (location.startsWith('/goal/')) {
+        if (location != AppRoutes.home) {
           context.go(AppRoutes.home);
         }
       },
@@ -24,7 +24,7 @@ class HomeBottomNavigationBar extends ConsumerWidget {
         BottomNavigationBarItem(
           icon: Icon(Icons.trending_up_outlined),
           activeIcon: Icon(Icons.trending_up),
-          label: '진행 중',
+          label: '진행중',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.check_circle_outline),

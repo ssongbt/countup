@@ -1,4 +1,5 @@
 import 'package:countup/features/goals/presentation/providers/goal_providers.dart';
+import 'package:countup/features/goals/presentation/widgets/home_bottom_navigation_bar.dart';
 import 'package:countup/core/routing/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,14 +44,18 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: '뒤로가기',
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+              return;
+            }
+            context.go(AppRoutes.home);
+          },
+          icon: const Icon(Icons.arrow_back_ios_new),
+        ),
         title: const Text('목표 추가'),
-        actions: [
-          IconButton(
-            tooltip: '홈으로',
-            onPressed: () => context.go(AppRoutes.home),
-            icon: const Icon(Icons.home_outlined),
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -100,6 +105,7 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: const HomeBottomNavigationBar(),
     );
   }
 }

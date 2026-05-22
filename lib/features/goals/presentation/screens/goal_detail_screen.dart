@@ -28,7 +28,7 @@ class GoalDetailScreen extends ConsumerWidget {
       );
     }
 
-    final canUndo = notifier.canUndo(goalId);
+    final canDecrement = goal.currentCount > 0;
     final isCompleted = goal.isCompleted;
 
     Future<void> handleIncrement() async {
@@ -150,8 +150,9 @@ class GoalDetailScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton.filledTonal(
-                    tooltip: '1회 되돌리기',
-                    onPressed: canUndo ? () => notifier.undo(goalId) : null,
+                    tooltip: '1회 줄이기',
+                    onPressed:
+                        canDecrement ? () => notifier.decrement(goalId) : null,
                     iconSize: 32,
                     icon: const Icon(Icons.keyboard_arrow_down),
                   ),

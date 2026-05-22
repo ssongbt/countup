@@ -23,8 +23,6 @@ final goalByIdProvider = Provider.family<Goal?, String>((ref, id) {
 });
 
 class GoalsNotifier extends AsyncNotifier<List<Goal>> {
-  String? _undoTargetGoalId;
-
   @override
   Future<List<Goal>> build() async {
     return ref.read(goalRepositoryProvider).getGoals();
@@ -57,16 +55,11 @@ class GoalsNotifier extends AsyncNotifier<List<Goal>> {
 
   Future<void> increment(String goalId) async {
     await ref.read(goalRepositoryProvider).increment(goalId);
-    _undoTargetGoalId = goalId;
     await refreshGoals();
   }
 
-  Future<void> undo(String goalId) async {
-    if (_undoTargetGoalId != goalId) {
-      return;
-    }
-    await ref.read(goalRepositoryProvider).undoLastIncrement(goalId);
-    _undoTargetGoalId = null;
+  Future<void> decrement(String goalId) async {
+    await ref.read(goalRepositoryProvider).decrement(goalId);
     await refreshGoals();
   }
 
@@ -101,11 +94,6 @@ class GoalsNotifier extends AsyncNotifier<List<Goal>> {
 
   Future<void> deleteGoal(String goalId) async {
     await ref.read(goalRepositoryProvider).deleteGoal(goalId);
-    if (_undoTargetGoalId == goalId) {
-      _undoTargetGoalId = null;
-    }
     await refreshGoals();
   }
-
-  bool canUndo(String goalId) => _undoTargetGoalId == goalId;
 }
