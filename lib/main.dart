@@ -1,9 +1,17 @@
 import 'package:countup/core/db/hive_provider.dart';
 import 'package:countup/core/routing/app_router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 화면 세로 고정
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+
   runApp(const ProviderScope(child: CountUpApp()));
 }
 
@@ -23,6 +31,7 @@ class CountUpApp extends ConsumerWidget {
     );
 
     return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
       title: 'CountUp',
       theme: ThemeData(
         useMaterial3: true,

@@ -70,6 +70,35 @@ class GoalsNotifier extends AsyncNotifier<List<Goal>> {
     await refreshGoals();
   }
 
+  Future<void> updateGoalDetails({
+    required String goalId,
+    required String title,
+    required int targetCount,
+  }) async {
+    final goal = state.valueOrNull?.where((g) => g.id == goalId).firstOrNull;
+    if (goal == null) {
+      return;
+    }
+
+    final clampedTarget = targetCount.clamp(1, 999);
+    final clampedCurrent = goal.currentCount.clamp(0, clampedTarget);
+    final isCompleted = clampedCurrent >= clampedTarget;
+
+    final updated = Goal(
+      id: goal.id,
+      title: title.trim(),
+      targetCount: clampedTarget,
+      currentCount: clampedCurrent,
+      status: isCompleted ? GoalStatus.completed : GoalStatus.active,
+      createdAt: goal.createdAt,
+      updatedAt: DateTime.now(),
+      completedAt: isCompleted ? (goal.completedAt ?? DateTime.now()) : null,
+      visualType: goal.visualType,
+    );
+    await ref.read(goalRepositoryProvider).updateGoal(updated);
+    await refreshGoals();
+  }
+
   Future<void> deleteGoal(String goalId) async {
     await ref.read(goalRepositoryProvider).deleteGoal(goalId);
     if (_undoTargetGoalId == goalId) {

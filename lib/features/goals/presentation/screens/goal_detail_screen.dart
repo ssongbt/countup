@@ -1,4 +1,7 @@
+import 'package:countup/features/goals/domain/entities/goal.dart';
 import 'package:countup/features/goals/presentation/providers/goal_providers.dart';
+import 'package:countup/features/goals/presentation/providers/home_tab_provider.dart';
+import 'package:countup/features/goals/presentation/widgets/home_bottom_navigation_bar.dart';
 import 'package:countup/core/routing/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +24,7 @@ class GoalDetailScreen extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(title: const Text('목표 상세')),
         body: const Center(child: Text('목표를 찾을 수 없습니다.')),
+        bottomNavigationBar: const HomeBottomNavigationBar(),
       );
     }
 
@@ -54,21 +58,15 @@ class GoalDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           tooltip: '뒤로가기',
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-              return;
-            }
-            context.go(AppRoutes.home);
-          },
+          onPressed: () => _handleBack(context, ref, goal.isCompleted),
           icon: const Icon(Icons.arrow_back_ios_new),
         ),
         title: Text(goal.title),
         actions: [
           IconButton(
-            tooltip: '홈으로',
-            onPressed: () => context.go(AppRoutes.home),
-            icon: const Icon(Icons.home_outlined),
+            tooltip: '수정',
+            onPressed: () => _showEditGoalDialog(context, ref, goal),
+            icon: const Icon(Icons.edit_outlined),
           ),
           IconButton(
             tooltip: '삭제',
@@ -98,7 +96,10 @@ class GoalDetailScreen extends ConsumerWidget {
               }
               await notifier.deleteGoal(goalId);
               if (context.mounted) {
-                context.go(AppRoutes.home);
+                if (goal.isCompleted) {
+                  ref.read(homeTabIndexProvider.notifier).state = 1;
+                }
+                _navigateToHome(context);
               }
             },
             icon: const Icon(Icons.delete_outline),
@@ -166,6 +167,151 @@ class GoalDetailScreen extends ConsumerWidget {
           ],
         ),
       ),
+      bottomNavigationBar: const HomeBottomNavigationBar(),
+    );
+  }
+}
+
+void _handleBack(BuildContext context, WidgetRef ref, bool isCompletedGoal) {
+  if (isCompletedGoal) {
+    ref.read(homeTabIndexProvider.notifier).state = 1;
+  }
+  _navigateToHome(context);
+}
+
+void _navigateToHome(BuildContext context) {
+  if (context.canPop()) {
+    context.pop();
+    return;
+  }
+  context.go(AppRoutes.home);
+}
+
+Future<void> _showEditGoalDialog(
+  BuildContext context,
+  WidgetRef ref,
+  Goal goal,
+) async {
+  final result = await showDialog<_EditGoalResult>(
+    context: context,
+    builder: (_) => _EditGoalDialog(goal: goal),
+  );
+
+  if (result == null) {
+    return;
+  }
+
+  await ref.read(goalsProvider.notifier).updateGoalDetails(
+        goalId: goal.id,
+        title: result.title,
+        targetCount: result.targetCount,
+      );
+}
+
+class _EditGoalResult {
+  const _EditGoalResult({
+    required this.title,
+    required this.targetCount,
+  });
+
+  final String title;
+  final int targetCount;
+}
+
+class _EditGoalDialog extends StatefulWidget {
+  const _EditGoalDialog({required this.goal});
+
+  final Goal goal;
+
+  @override
+  State<_EditGoalDialog> createState() => _EditGoalDialogState();
+}
+
+class _EditGoalDialogState extends State<_EditGoalDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _titleController;
+  late final TextEditingController _targetController;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.goal.title);
+    _targetController =
+        TextEditingController(text: '${widget.goal.targetCount}');
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _targetController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    if (_formKey.currentState?.validate() != true) {
+      return;
+    }
+    Navigator.of(context).pop(
+      _EditGoalResult(
+        title: _titleController.text,
+        targetCount: int.parse(_targetController.text),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('목표 수정'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _titleController,
+              maxLength: 30,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: '목표',
+                hintText: '예: 헬스 13번 가기',
+              ),
+              validator: (value) {
+                final text = value?.trim() ?? '';
+                if (text.isEmpty) {
+                  return '목표를 입력해주세요.';
+                }
+                return null;
+              },
+            ),
+            TextFormField(
+              controller: _targetController,
+              decoration: const InputDecoration(
+                labelText: '목표 횟수',
+                hintText: '예: 13',
+              ),
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                final parsed = int.tryParse(value ?? '');
+                if (parsed == null || parsed < 1 || parsed > 999) {
+                  return '1~999 사이 숫자를 입력해주세요.';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          onPressed: _save,
+          child: const Text('저장'),
+        ),
+      ],
     );
   }
 }
