@@ -5,21 +5,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 class HomeBottomNavigationBar extends ConsumerWidget {
-  const HomeBottomNavigationBar({super.key});
+  const HomeBottomNavigationBar({
+    super.key,
+    this.enabled = true,
+  });
+
+  final bool enabled;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tabIndex = ref.watch(homeTabIndexProvider);
 
-    return BottomNavigationBar(
-      currentIndex: tabIndex,
-      onTap: (index) {
-        ref.read(homeTabIndexProvider.notifier).state = index;
-        final location = GoRouterState.of(context).uri.path;
-        if (location != AppRoutes.home) {
-          context.go(AppRoutes.home);
-        }
-      },
+    return Opacity(
+      opacity: enabled ? 1 : 0.45,
+      child: BottomNavigationBar(
+        currentIndex: tabIndex,
+        onTap: (index) {
+          if (!enabled) {
+            return;
+          }
+          ref.read(homeTabIndexProvider.notifier).state = index;
+          final location = GoRouterState.of(context).uri.path;
+          if (location != AppRoutes.home) {
+            context.go(AppRoutes.home);
+          }
+        },
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.trending_up_outlined),
@@ -32,6 +42,7 @@ class HomeBottomNavigationBar extends ConsumerWidget {
           label: '완료',
         ),
       ],
+      ),
     );
   }
 }

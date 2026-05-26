@@ -68,7 +68,7 @@ class HiveGoalRepository implements GoalRepository {
   @override
   Future<void> decrement(String id) async {
     final goal = await getGoalById(id);
-    if (goal == null || goal.currentCount <= 1) {
+    if (goal == null || goal.currentCount <= 0) {
       return;
     }
     final nextCount = goal.currentCount - 1;

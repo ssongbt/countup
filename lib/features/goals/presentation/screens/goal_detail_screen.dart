@@ -1,4 +1,5 @@
 import 'package:countup/features/goals/domain/entities/goal.dart';
+import 'package:countup/features/goals/presentation/providers/goal_detail_lock_provider.dart';
 import 'package:countup/features/goals/presentation/providers/goal_providers.dart';
 import 'package:countup/features/goals/presentation/providers/home_tab_provider.dart';
 import 'package:countup/features/goals/presentation/widgets/home_bottom_navigation_bar.dart';
@@ -28,11 +29,12 @@ class GoalDetailScreen extends ConsumerWidget {
       );
     }
 
+    final isLocked = ref.watch(goalDetailLockedProvider(goalId));
     final canDecrement = goal.currentCount > 0;
     final isCompleted = goal.isCompleted;
 
     Future<void> handleIncrement() async {
-      if (isCompleted) {
+      if (isLocked || isCompleted) {
         return;
       }
       await notifier.increment(goalId);
@@ -54,54 +56,78 @@ class GoalDetailScreen extends ConsumerWidget {
       }
     }
 
-    return Scaffold(
+    return PopScope(
+      canPop: !isLocked,
+      child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           tooltip: '뒤로가기',
-          onPressed: () => _handleBack(context, ref, goal.isCompleted),
+          onPressed: isLocked
+              ? null
+              : () => _handleBack(context, ref, goal.isCompleted),
           icon: const Icon(Icons.arrow_back_ios_new),
         ),
-        title: Text(goal.title),
+        title: Text(
+          goal.title,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(
+            tooltip: isLocked ? '잠금 해제' : '잠금',
+            onPressed: () {
+              ref.read(goalDetailLockedProvider(goalId).notifier).state =
+                  !isLocked;
+            },
+            icon: Icon(
+              isLocked ? Icons.lock : Icons.lock_open_outlined,
+              // color:null,
+            ),
+          ),
+          IconButton(
             tooltip: '수정',
-            onPressed: () => _showEditGoalDialog(context, ref, goal),
+            onPressed:
+                isLocked ? null : () => _showEditGoalDialog(context, ref, goal),
             icon: const Icon(Icons.edit_outlined),
           ),
           IconButton(
             tooltip: '삭제',
-            onPressed: () async {
-              final shouldDelete = await showDialog<bool>(
-                context: context,
-                builder: (dialogContext) => AlertDialog(
-                  title: const Text('목표를 삭제할까요?'),
-                  content: const Text('삭제 후에는 복구할 수 없어요.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(false),
-                      child: const Text('취소'),
-                    ),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.error,
+            onPressed: isLocked
+                ? null
+                : () async {
+                    final shouldDelete = await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: const Text('목표를 삭제할까요?'),
+                        content: const Text('삭제 후에는 복구할 수 없어요.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(false),
+                            child: const Text('취소'),
+                          ),
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.error,
+                            ),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(true),
+                            child: const Text('삭제'),
+                          ),
+                        ],
                       ),
-                      onPressed: () => Navigator.of(dialogContext).pop(true),
-                      child: const Text('삭제'),
-                    ),
-                  ],
-                ),
-              );
-              if (shouldDelete != true || !context.mounted) {
-                return;
-              }
-              await notifier.deleteGoal(goalId);
-              if (context.mounted) {
-                if (goal.isCompleted) {
-                  ref.read(homeTabIndexProvider.notifier).state = 1;
-                }
-                _navigateToHome(context);
-              }
-            },
+                    );
+                    if (shouldDelete != true || !context.mounted) {
+                      return;
+                    }
+                    await notifier.deleteGoal(goalId);
+                    if (context.mounted) {
+                      if (goal.isCompleted) {
+                        ref.read(homeTabIndexProvider.notifier).state = 1;
+                      }
+                      _navigateToHome(context);
+                    }
+                  },
             icon: const Icon(Icons.delete_outline),
           ),
         ],
@@ -119,7 +145,7 @@ class GoalDetailScreen extends ConsumerWidget {
             Expanded(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: isCompleted ? null : handleIncrement,
+                onTap: isLocked || isCompleted ? null : handleIncrement,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -151,14 +177,16 @@ class GoalDetailScreen extends ConsumerWidget {
                 children: [
                   IconButton.filledTonal(
                     tooltip: '1회 줄이기',
-                    onPressed:
-                        canDecrement ? () => notifier.decrement(goalId) : null,
+                    onPressed: isLocked || !canDecrement
+                        ? null
+                        : () => notifier.decrement(goalId),
                     iconSize: 32,
                     icon: const Icon(Icons.keyboard_arrow_down),
                   ),
                   IconButton.filled(
                     tooltip: '1회 추가',
-                    onPressed: isCompleted ? null : handleIncrement,
+                    onPressed:
+                        isLocked || isCompleted ? null : handleIncrement,
                     iconSize: 32,
                     icon: const Icon(Icons.keyboard_arrow_up),
                   ),
@@ -168,7 +196,8 @@ class GoalDetailScreen extends ConsumerWidget {
           ],
         ),
       ),
-      bottomNavigationBar: const HomeBottomNavigationBar(),
+      bottomNavigationBar: HomeBottomNavigationBar(enabled: !isLocked),
+      ),
     );
   }
 }
