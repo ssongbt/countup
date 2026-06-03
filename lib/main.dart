@@ -10,13 +10,15 @@ void main() async {
   
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinde);
 
-
   // 화면 세로 고정
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]);
 
   runApp(const ProviderScope(child: CountUpApp()));
+
+  FlutterNativeSplash.remove();
+
 }
 
 class CountUpApp extends ConsumerWidget {
