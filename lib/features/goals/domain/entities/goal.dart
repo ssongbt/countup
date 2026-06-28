@@ -21,6 +21,7 @@ class Goal {
     required this.updatedAt,
     required this.visualType,
     this.completedAt,
+    this.countLog = const [],
   });
 
   final String id;
@@ -32,6 +33,9 @@ class Goal {
   final DateTime updatedAt;
   final DateTime? completedAt;
   final GoalVisualType visualType;
+
+  /// 1회씩 카운트업한 시각의 기록 (오래된 순)
+  final List<DateTime> countLog;
 
   double get progress {
     if (targetCount <= 0) {

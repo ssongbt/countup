@@ -1,4 +1,5 @@
 import 'package:countup/features/goals/domain/entities/goal.dart';
+import 'package:countup/features/goals/presentation/providers/goal_detail_history_provider.dart';
 import 'package:countup/features/goals/presentation/providers/goal_detail_lock_provider.dart';
 import 'package:countup/features/goals/presentation/providers/goal_providers.dart';
 import 'package:countup/features/goals/presentation/providers/home_tab_provider.dart';
@@ -7,6 +8,7 @@ import 'package:countup/core/routing/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 class GoalDetailScreen extends ConsumerWidget {
   const GoalDetailScreen({
@@ -30,6 +32,7 @@ class GoalDetailScreen extends ConsumerWidget {
     }
 
     final isLocked = ref.watch(goalDetailLockedProvider(goalId));
+    final isHistoryView = ref.watch(goalDetailHistoryViewProvider(goalId));
     final canDecrement = goal.currentCount > 0;
     final isCompleted = goal.isCompleted;
 
@@ -81,6 +84,16 @@ class GoalDetailScreen extends ConsumerWidget {
             icon: Icon(
               isLocked ? Icons.lock : Icons.lock_open_outlined,
               // color:null,
+            ),
+          ),
+          IconButton(
+            tooltip: isHistoryView ? '기록 닫기' : '기록',
+            onPressed: () {
+              ref.read(goalDetailHistoryViewProvider(goalId).notifier).state =
+                  !isHistoryView;
+            },
+            icon: Icon(
+              isHistoryView ? Icons.touch_app_outlined : Icons.history,
             ),
           ),
           IconButton(
@@ -142,34 +155,37 @@ class GoalDetailScreen extends ConsumerWidget {
               currentCount: goal.currentCount,
               targetCount: goal.targetCount,
             ),
-            Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: isLocked || isCompleted ? null : handleIncrement,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${goal.currentCount}',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontSize: 72,
-                        fontWeight: FontWeight.w700,
-                        height: 1,
+            if (isHistoryView)
+              _CountHistoryView(goal: goal)
+            else
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: isLocked || isCompleted ? null : handleIncrement,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${goal.currentCount}',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                          fontSize: 72,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '남은 횟수 ${goal.remainingCount}',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      const SizedBox(height: 12),
+                      Text(
+                        '남은 횟수 ${goal.remainingCount}',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Row(
@@ -391,6 +407,104 @@ class _ThinProgressBar extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CountHistoryView extends StatelessWidget {
+  const _CountHistoryView({required this.goal});
+
+  final Goal goal;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final logDateFormat = DateFormat('yy/MM/dd HH:mm');
+    final labelStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      color: colorScheme.onSurfaceVariant,
+    );
+
+    return Expanded(
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Column(
+                children: [
+                  Text('목표시작일시', style: labelStyle),
+                  const SizedBox(height: 4),
+                  Text(
+                    logDateFormat.format(goal.createdAt),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                children: [
+                  Text(
+                    '${goal.currentCount}',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text('남은 횟수 ${goal.remainingCount}', style: labelStyle),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Divider(height: 1),
+          Expanded(
+            child: goal.countLog.isEmpty
+                ? Center(
+                    child: Text(
+                      '기록이 없습니다.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    itemCount: goal.countLog.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final count = index + 1;
+                      final isGoalAchieved =
+                          goal.isCompleted && count == goal.targetCount;
+                      return ListTile(
+                        dense: true,
+                        leading: Text(
+                          '$count',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        title: Text(
+                          isGoalAchieved ? '목표달성' : '$count카운트',
+                          style: isGoalAchieved
+                              ? TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                )
+                              : null,
+                        ),
+                        trailing: Text(
+                          logDateFormat.format(goal.countLog[index]),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

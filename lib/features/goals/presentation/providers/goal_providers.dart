@@ -1,4 +1,5 @@
 import 'package:countup/core/db/hive_provider.dart';
+import 'package:countup/core/utils/kst_time.dart';
 import 'package:countup/features/goals/data/repositories/hive_goal_repository.dart';
 import 'package:countup/features/goals/domain/entities/goal.dart';
 import 'package:countup/features/goals/domain/repositories/goal_repository.dart';
@@ -37,7 +38,7 @@ class GoalsNotifier extends AsyncNotifier<List<Goal>> {
     required String title,
     required int targetCount,
   }) async {
-    final now = DateTime.now();
+    final now = kstNow();
     final goal = Goal(
       id: const Uuid().v4(),
       title: title.trim(),
@@ -48,6 +49,7 @@ class GoalsNotifier extends AsyncNotifier<List<Goal>> {
       updatedAt: now,
       completedAt: null,
       visualType: GoalVisualType.dots,
+      countLog: const [],
     );
     await ref.read(goalRepositoryProvider).createGoal(goal);
     await refreshGoals();
@@ -76,6 +78,9 @@ class GoalsNotifier extends AsyncNotifier<List<Goal>> {
     final clampedTarget = targetCount.clamp(1, 999);
     final clampedCurrent = goal.currentCount.clamp(0, clampedTarget);
     final isCompleted = clampedCurrent >= clampedTarget;
+    final clampedLog = goal.countLog.length > clampedCurrent
+        ? goal.countLog.sublist(0, clampedCurrent)
+        : goal.countLog;
 
     final updated = Goal(
       id: goal.id,
@@ -84,9 +89,10 @@ class GoalsNotifier extends AsyncNotifier<List<Goal>> {
       currentCount: clampedCurrent,
       status: isCompleted ? GoalStatus.completed : GoalStatus.active,
       createdAt: goal.createdAt,
-      updatedAt: DateTime.now(),
-      completedAt: isCompleted ? (goal.completedAt ?? DateTime.now()) : null,
+      updatedAt: kstNow(),
+      completedAt: isCompleted ? (goal.completedAt ?? kstNow()) : null,
       visualType: goal.visualType,
+      countLog: clampedLog,
     );
     await ref.read(goalRepositoryProvider).updateGoal(updated);
     await refreshGoals();

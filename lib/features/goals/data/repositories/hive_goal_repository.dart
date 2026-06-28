@@ -1,3 +1,4 @@
+import 'package:countup/core/utils/kst_time.dart';
 import 'package:countup/features/goals/data/models/goal_model.dart';
 import 'package:countup/features/goals/domain/entities/goal.dart';
 import 'package:countup/features/goals/domain/repositories/goal_repository.dart';
@@ -51,6 +52,7 @@ class HiveGoalRepository implements GoalRepository {
     }
     final nextCount = (goal.currentCount + 1).clamp(0, goal.targetCount);
     final isCompleted = nextCount >= goal.targetCount;
+    final now = kstNow();
     final updated = Goal(
       id: goal.id,
       title: goal.title,
@@ -58,9 +60,10 @@ class HiveGoalRepository implements GoalRepository {
       currentCount: nextCount,
       status: isCompleted ? GoalStatus.completed : GoalStatus.active,
       createdAt: goal.createdAt,
-      updatedAt: DateTime.now(),
-      completedAt: isCompleted ? DateTime.now() : null,
+      updatedAt: now,
+      completedAt: isCompleted ? now : null,
       visualType: goal.visualType,
+      countLog: [...goal.countLog, now],
     );
     await updateGoal(updated);
   }
@@ -79,9 +82,12 @@ class HiveGoalRepository implements GoalRepository {
       currentCount: nextCount,
       status: GoalStatus.active,
       createdAt: goal.createdAt,
-      updatedAt: DateTime.now(),
+      updatedAt: kstNow(),
       completedAt: null,
       visualType: goal.visualType,
+      countLog: goal.countLog.isEmpty
+          ? goal.countLog
+          : goal.countLog.sublist(0, goal.countLog.length - 1),
     );
     await updateGoal(updated);
   }

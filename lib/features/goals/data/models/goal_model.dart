@@ -11,6 +11,7 @@ class GoalModel {
     required this.updatedAt,
     required this.visualType,
     this.completedAt,
+    this.countLog = const [],
   });
 
   final String id;
@@ -22,6 +23,7 @@ class GoalModel {
   final DateTime updatedAt;
   final DateTime? completedAt;
   final GoalVisualType visualType;
+  final List<DateTime> countLog;
 
   Goal toDomain() {
     return Goal(
@@ -34,6 +36,7 @@ class GoalModel {
       updatedAt: updatedAt,
       completedAt: completedAt,
       visualType: visualType,
+      countLog: countLog,
     );
   }
 
@@ -48,6 +51,7 @@ class GoalModel {
       updatedAt: goal.updatedAt,
       completedAt: goal.completedAt,
       visualType: goal.visualType,
+      countLog: goal.countLog,
     );
   }
 
@@ -62,6 +66,7 @@ class GoalModel {
       'updatedAt': updatedAt.toIso8601String(),
       'completedAt': completedAt?.toIso8601String(),
       'visualType': visualType.name,
+      'countLog': countLog.map((e) => e.toIso8601String()).toList(),
     };
   }
 
@@ -92,6 +97,10 @@ class GoalModel {
           ? null
           : DateTime.parse(map['completedAt'] as String),
       visualType: parseVisual((map['visualType'] as String?) ?? 'dots'),
+      countLog: (map['countLog'] as List?)
+              ?.map((e) => DateTime.parse(e as String))
+              .toList() ??
+          const [],
     );
   }
 }
