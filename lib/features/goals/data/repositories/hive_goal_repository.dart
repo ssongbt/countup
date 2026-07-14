@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:countup/core/utils/kst_time.dart';
 import 'package:countup/features/goals/data/models/goal_model.dart';
 import 'package:countup/features/goals/domain/entities/goal.dart';
@@ -31,9 +32,23 @@ class HiveGoalRepository implements GoalRepository {
 
   @override
   Future<List<Goal>> getGoals() async {
-    final goals = _box.values
-        .map((raw) => GoalModel.fromMap(raw).toDomain())
-        .toList();
+    final goals = <Goal>[];
+    for (final key in _box.keys) {
+      final raw = _box.get(key);
+      if (raw == null) {
+        continue;
+      }
+      try {
+        goals.add(GoalModel.fromMap(raw).toDomain());
+      } catch (error, stackTrace) {
+        developer.log(
+          'Skipping corrupted goal record (key: $key)',
+          name: 'HiveGoalRepository',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
+    }
     goals.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     return goals;
   }

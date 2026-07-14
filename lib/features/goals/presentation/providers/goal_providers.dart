@@ -30,7 +30,7 @@ class GoalsNotifier extends AsyncNotifier<List<Goal>> {
   }
 
   Future<void> refreshGoals() async {
-    state = const AsyncLoading();
+    state = const AsyncLoading<List<Goal>>().copyWithPrevious(state);
     state = await AsyncValue.guard(() => ref.read(goalRepositoryProvider).getGoals());
   }
 
